@@ -1,15 +1,91 @@
-import os
 from typing import Annotated, Sequence, TypedDict
-from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import ToolMessage, HumanMessage
+from langchain_core.messages import ToolMessage, HumanMessage, BaseMessage
 from langgraph.graph.message import add_messages
-from langchain_core.tools import tool
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_chroma import Chroma
 
 from .system_prompt import SYSTEM_MESSAGE
+from .tool import retriever_tool
+from .utils import MODELS, load_pdf, initialise_vector_store, vectorise_document
 
-models = {"qwen3": "qwen3:1.7b", "nomic": "nomic-embed-text:v1.5"}
 
+pages = load_pdf()
+vector_store = initialise_vector_store()
+vectorise_document(vector_store, pages)
+
+retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+
+tools = [retriever_tool]
+# temperature = 0 to reduce hallucination
+llm = ChatOllama(model=MODELS["qwen3"], temperature=0).bind_tools(tools) 
+
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+
+
+def should_continue(state: AgentState) -> AgentState:
+    """Checks if the last message has tool calls. If yes, continue, else, end"""
+    messages = state["messages"][-1]
+
+    return hasattr(messages, "tool_calls") and messages.tool_calls > 0
+
+
+def call_llm(state: AgentState) -> AgentState:
+    """Function to call LLM with current state"""
+
+    messages = [SYSTEM_MESSAGE] + state["messages"]
+    message = llm.invoke(messages)
+
+    return {"messages": [message]}
+
+
+def take_action(state: AgentState) -> AgentState:
+    """Execute the tool calls from the LLMs responses"""
+
+    tool_calls = state["messages"][-1].tool_calls
+    results = []
+    tools_dict = {our_tool.name: our_tool for our_tool in tools}
+
+    for t in tool_calls:
+        print(f"Calling tool {t['name']} with query {t['args'].get('query', 'No query found')}")
+
+        if not t['name'] in tools_dict:
+            print(f"{t['name']} does not exist")
+            result = "Incorrect tool name. Please retry and select the tool available from the list of tools"
+        else:
+            result = tools_dict[t['name']].invoke(t['args'].get('query', ''))
+            print(f"Result length: {len(str(result))}")
+        
+        tool_message = ToolMessage(content=str(result), tool_call_id=t['id'], name=t['name'])
+        results.append(tool_message)
+    
+    print("Tool execution complete, return to LLM")
+    return {"messages": results}
+
+
+graph = StateGraph(AgentState)
+
+graph.add_node("llm", call_llm)
+graph.add_node("retriever", take_action)
+
+graph.add_conditional_edges("llm", should_continue, {True: "retriever", False: END})
+graph.add_edge("retriever", "llm")
+
+rag_agent = graph.compile()
+
+
+def run_agent():
+    print("\n=== RAG AGENT===")
+
+    while True:
+        human_input = input("\nEnter your question: ")
+        human_message = HumanMessage(content=human_input)
+
+        result = llm.invoke({"messages": [human_message]})
+
+        print("\n=== ANSWER ===")
+        print(result['messages'][-1].content)
+
+
+if __name__ == "__main__":
+    run_agent()
