@@ -42,8 +42,8 @@ Overall, this was a fun and insightful way to dive into building local LLM appli
 - Ollama — to run LLMs locally
 - LangGraph — for building structured LLM workflows
 - Chroma — utilities for embeddings, vector stores
-- LngChain - document processing
+- LangChain — document processing
 
-📁 Project Goals
+## 📁 Project Goals
 
 This is a personal learning project aimed at understanding the internals of RAG systems and LangGraph workflows. PRs, feedback or suggestions are welcome!
