@@ -1,0 +1,3 @@
+PDF_FILE_PATH = "./Stock_Market_Performance_2024.pdf"
+PERSIST_EMBEDDINGS_DIRECTORY = "."
+EMBEDDINGS_COLLECTION_NAME = "stock_market"
