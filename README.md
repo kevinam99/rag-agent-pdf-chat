@@ -27,7 +27,7 @@ Overall, this was a fun and insightful way to dive into building local LLM appli
     pip install -r requirements.txt
     ```
 
-3. **Configure your settings**
+3. **Configure your settings**  
     Edit [config.py](./config.py) to adjust PDF file settings as needed. Defaults are provided for quick starts.
     The [utils.py](./utils.py) file has the models being used. You can add your models as you need.
 
