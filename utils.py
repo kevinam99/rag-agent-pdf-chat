@@ -17,6 +17,7 @@ def load_pdf():
     
     pdf_loader = PyPDFLoader(pdf_path)
 
+    # lazy load to avoid loading entire file to memory
     try:
         pages = pdf_loader.lazy_load()
         print(f"PDF loaded lazily")
