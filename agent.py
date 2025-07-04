@@ -6,8 +6,8 @@ from langgraph.graph.message import add_messages
 from langchain_core.tools import tool
 
 from system_prompt import SYSTEM_MESSAGE
-from utils import MODELS, load_pdf, initialise_vector_store, vectorise_document
-
+from utils import load_pdf, initialise_vector_store, vectorise_document
+from config import LLM
 
 pages = load_pdf()
 vector_store = initialise_vector_store()
@@ -49,8 +49,9 @@ def retriever_tool(query: str) -> str:
     return "\n\n".join(results)
 
 tools = [retriever_tool, summariser_tool]
+
 # temperature = 0 to reduce hallucination
-llm = ChatOllama(model=MODELS["qwen3"], temperature=0).bind_tools(tools) 
+llm = ChatOllama(model=LLM, temperature=0).bind_tools(tools) 
 
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]

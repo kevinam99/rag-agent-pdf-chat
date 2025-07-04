@@ -6,9 +6,7 @@ from langchain_chroma import Chroma
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from config import PDF_FILE_PATH, PERSIST_EMBEDDINGS_DIRECTORY, EMBEDDINGS_COLLECTION_NAME
-
-MODELS = {"qwen3": "qwen3:1.7b", "nomic": "nomic-embed-text:v1.5"}
+from config import PDF_FILE_PATH, PERSIST_EMBEDDINGS_DIRECTORY, EMBEDDINGS_COLLECTION_NAME, EMBEDDING_MODEL
 
 def load_pdf():
     pdf_path = PDF_FILE_PATH
@@ -31,7 +29,7 @@ def load_pdf():
 
 def initialise_vector_store():
     # the embedding model must be compatible with the LLM
-    embeddings = OllamaEmbeddings(model=MODELS["nomic"], temperature=0)
+    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, temperature=0)
     return Chroma(embedding_function=embeddings, persist_directory=PERSIST_EMBEDDINGS_DIRECTORY, collection_name=EMBEDDINGS_COLLECTION_NAME)
 
 
