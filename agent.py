@@ -19,14 +19,18 @@ retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"
 def summariser_tool() -> str:
     """This tools goes through the documen to provide a concise summary"""
 
-    summary = retriever.invoke("Summarise this document's contents")
+    query = """
+    Summarise the contents of this document. Be as concise as possible while not missing any key points.
+    Try to have at least 5 - 7 points and add a suitable headline.
+    """
+    summary = retriever.invoke(query)
 
     results = []
 
     for i, doc in enumerate(summary):
         results.append(f"\n{doc}")
     
-    return "The summary is:" + "\n\n".join(results)
+    return "\n\n".join(results)
 
 @tool
 def retriever_tool(query: str) -> str:
