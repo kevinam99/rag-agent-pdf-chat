@@ -16,6 +16,19 @@ vectorise_document(vector_store, pages)
 retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
 @tool
+def summariser_tool() -> str:
+    """This tools goes through the documen to provide a concise summary"""
+
+    summary = retriever.invoke("Summarise this document's contents")
+
+    results = []
+
+    for i, doc in enumerate(summary):
+        results.append(f"\n{doc}")
+    
+    return "The summary is:" + "\n\n".join(results)
+
+@tool
 def retriever_tool(query: str) -> str:
     """This tools searches and returns the information from the given document"""
 
@@ -31,7 +44,7 @@ def retriever_tool(query: str) -> str:
     
     return "\n\n".join(results)
 
-tools = [retriever_tool]
+tools = [retriever_tool, summariser_tool]
 # temperature = 0 to reduce hallucination
 llm = ChatOllama(model=MODELS["qwen3"], temperature=0).bind_tools(tools) 
 
